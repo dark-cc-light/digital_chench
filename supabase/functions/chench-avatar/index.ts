@@ -1,123 +1,103 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are the digital avatar of chench, an embedded software development engineer who is learning to build products with AI. You represent chench on his personal homepage.
+const SYSTEM_PROMPT = `你是 chench 的数字分身，用来在个人主页里回答访客关于 chench 的问题。
 
-## Your Knowledge Base:
+你的任务：
+- 介绍 chench 是谁
+- 回答和 chench 有关的问题
+- 帮访客了解 chench 最近在做什么、做过什么、怎么联系 chench
 
-**Professional Identity:**
-- Name: chench
-- Role: Embedded software development engineer
-- Current focus: Embedded software development and product design
-- Memorable trait: Likes to explain complex problems in plain, simple language
+关于 chench：
+- 姓名：chench
+- 最近在做：嵌入式软件应用开发、架构设计与产品设计，也在尝试用 AI 做一些更完整的小项目
+- 擅长或长期关注：vibe coding、嵌入式架构和个人效率工作流搭建，也比较关注 AI 应用、内容表达和知识整理
 
-**Recent Work:**
-- Vibe coding (using AI to build products)
-- Embedded software architecture
-- Building his personal homepage
+说话方式：
+- 语气：亲和友善
+- 回答尽量：简洁 / 真诚 / 人话一点 / 不装专家
+- 用用户使用的语言回复——用户用中文就回中文，用户用英文就回英文
 
-**Expertise & Interests:**
-- Architecture design
-- Underlying principles of systems
-- Reasoning and problem-solving
-- AI applications
-- Tech stacks and technology
+边界：
+- 不要编造 chench 没做过的经历
+- 不要假装知道 chench 没提供的信息
+- 不知道时要明确说不知道，并建议访客通过联系方式进一步确认`;
 
-**Common Questions & Answers:**
-1. "What are you working on?" → Currently doing embedded software development and product design, recently exploring vibe coding, embedded software architecture, and building this personal homepage.
-2. "How can I contact you?" → You can reach out through the contact methods listed on this page, or connect via GitHub/social links.
-3. "What are your future plans?" → Continue deepening expertise in embedded systems and AI applications, building more products, and sharing knowledge with the community.
-
-## Your Personality:
-- Professional yet warm and approachable
-- Open-source community mindset
-- Reliable and knowledgeable
-- Always try to explain things simply and clearly
-- Like a friendly community builder
-
-## Communication Rules:
-- Language: Respond in the same language the user uses — if they write in Chinese, reply in Chinese; if they write in English, reply in English. Match the user's tone and style.
-- Keep responses concise and helpful
-- If asked about topics outside your knowledge base, politely say you don't have specific information on that but can share what you know about chench's work and interests
-- Never claim to be a general AI assistant - you are specifically chench's digital avatar
-- Use a conversational, friendly tone`;
-
-Deno.serve(async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
-  }
-
-  let messages: Array<{ role: string; content: string }>;
-
-  try {
-    const body = await req.json();
-    messages = body.messages;
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      throw new Error("Missing or invalid messages");
+export default {
+  async fetch(req: Request): Promise<Response> {
+    if (req.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: `Invalid request body: ${(err as Error).message}` }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+
+    if (req.method !== "POST") {
+      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+    }
+
+    let messages: Array<{ role: string; content: string }>;
+
+    try {
+      const body = await req.json();
+      messages = body.messages;
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        throw new Error("Missing or invalid messages");
+      }
+    } catch (err) {
+      return new Response(
+        JSON.stringify({ error: `Invalid request body: ${(err as Error).message}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const apiKey = process.env.INTEGRATIONS_API_KEY;
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: "Server configuration error: missing API key" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const fullMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages,
+    ];
+
+    const upstream = await fetch(
+      "https://app-c6w29djsgjr7-api-zYkZz8qovQ1L-gateway.appmiaoda.com/v2/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Gateway-Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ messages: fullMessages }),
+      }
     );
-  }
 
-  const apiKey = Deno.env.get("INTEGRATIONS_API_KEY");
-  if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "Server configuration error: missing API key" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+    if (upstream.status === 429 || upstream.status === 402) {
+      const errText = await upstream.text();
+      return new Response(errText, {
+        status: upstream.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  // Prepend system prompt to messages
-  const fullMessages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...messages,
-  ];
+    if (!upstream.ok || !upstream.body) {
+      return new Response(
+        JSON.stringify({ error: `Upstream error: ${upstream.status}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-  const upstream = await fetch(
-    "https://app-c6w29djsgjr7-api-zYkZz8qovQ1L-gateway.appmiaoda.com/v2/chat/completions",
-    {
-      method: "POST",
+    return new Response(upstream.body, {
       headers: {
-        "Content-Type": "application/json",
-        "X-Gateway-Authorization": `Bearer ${apiKey}`,
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Content-Type-Options": "nosniff",
       },
-      body: JSON.stringify({ messages: fullMessages }),
-    }
-  );
-
-  if (upstream.status === 429 || upstream.status === 402) {
-    const errText = await upstream.text();
-    return new Response(errText, {
-      status: upstream.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  }
-
-  if (!upstream.ok || !upstream.body) {
-    return new Response(
-      JSON.stringify({ error: `Upstream error: ${upstream.status}` }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  return new Response(upstream.body, {
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
-});
+  },
+};
