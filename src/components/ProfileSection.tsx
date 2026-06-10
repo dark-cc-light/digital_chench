@@ -49,17 +49,17 @@ export default function ProfileSection() {
           className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          <span>1462446123</span>
+          <span>QQ: 1462446123</span>
         </a>
         <span className="text-border/50">·</span>
         <a
-          href="https://github.com/dark-cc"
+          href="https://github.com/dark-cc-light/"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
         >
           <Code2 className="w-3.5 h-3.5" />
-          <span>dark-cc</span>
+          <span>github: dark-cc-light</span>
         </a>
       </div>
 
