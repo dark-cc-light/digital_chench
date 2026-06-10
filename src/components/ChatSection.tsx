@@ -14,9 +14,21 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  { label: "在做什么 / What are you working on?", value: "What are you working on?" },
-  { label: "怎么联系 / How can I contact you?", value: "How can I contact you?" },
-  { label: "未来规划 / What are your future plans?", value: "What are your future plans?" },
+  {
+    label: "最近在忙什么？",
+    sub: "What are you working on?",
+    value: "最近在忙什么？",
+  },
+  {
+    label: "怎么联系你？",
+    sub: "How can I contact you?",
+    value: "怎么联系你？",
+  },
+  {
+    label: "未来的计划？",
+    sub: "What are your future plans?",
+    value: "未来的计划？",
+  },
 ];
 
 export default function ChatSection() {
@@ -24,7 +36,7 @@ export default function ChatSection() {
     {
       role: "assistant",
       content:
-        "Hi! I'm chench's digital avatar. Feel free to ask me about his work, interests, or anything else. What would you like to know?",
+        "嗨！我是 chench 的数字分身 👋 关于他的工作、兴趣、或者任何你想知道的，都可以问我～",
     },
   ]);
   const [input, setInput] = useState("");
@@ -34,7 +46,9 @@ export default function ChatSection() {
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
-      const viewport = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]");
+      const viewport = scrollRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
       }
@@ -100,7 +114,7 @@ export default function ChatSection() {
           if (lastMsg.role === "assistant" && !lastMsg.content) {
             updated[updated.length - 1] = {
               ...lastMsg,
-              content: "Sorry, I encountered an error. Please try again.",
+              content: "抱歉，出了点问题，请再试一次 🙏",
             };
           }
           return updated;
@@ -116,21 +130,28 @@ export default function ChatSection() {
   };
 
   return (
-    <div className="flex flex-col h-full border border-border rounded-lg bg-card overflow-hidden">
+    <div className="flex flex-col h-full bg-muted/40 rounded-2xl border border-border/30 overflow-hidden shadow-sm">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/30">
-        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Digital Avatar</h2>
-          <p className="text-xs text-muted-foreground">Ask chench's AI assistant</p>
-        </div>
+      <div className="flex items-center gap-2 px-4 py-3.5">
+        <h2 className="text-base font-semibold text-foreground">
+          💬 和 chench 聊聊
+        </h2>
       </div>
 
       {/* Messages Area */}
       <ScrollArea ref={scrollRef} className="flex-1 min-h-0">
         <div className="p-4 space-y-4">
           {messages.map((msg, idx) => (
-            <MessageBubble key={idx} message={msg} isLast={idx === messages.length - 1} isStreaming={isStreaming && idx === messages.length - 1 && msg.role === "assistant"} />
+            <MessageBubble
+              key={idx}
+              message={msg}
+              isLast={idx === messages.length - 1}
+              isStreaming={
+                isStreaming &&
+                idx === messages.length - 1 &&
+                msg.role === "assistant"
+              }
+            />
           ))}
         </div>
       </ScrollArea>
@@ -138,16 +159,21 @@ export default function ChatSection() {
       {/* Suggested Questions */}
       {messages.length <= 1 && (
         <div className="px-4 pb-3">
-          <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+          <p className="text-xs text-muted-foreground/70 mb-2">
+            试试看：
+          </p>
           <div className="flex flex-col gap-2 items-start">
             {SUGGESTED_QUESTIONS.map((q) => (
               <button
                 key={q.value}
                 type="button"
                 onClick={() => handleSend(q.value)}
-                className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-accent text-foreground transition-colors whitespace-nowrap"
+                className="text-left px-3 py-1.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent/80 transition-colors w-full"
               >
-                {q.label}
+                <span className="text-sm text-foreground">{q.label}</span>
+                <span className="text-xs text-muted-foreground/60 ml-2">
+                  {q.sub}
+                </span>
               </button>
             ))}
           </div>
@@ -155,20 +181,23 @@ export default function ChatSection() {
       )}
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t border-border bg-muted/20">
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 p-3 bg-muted/20"
+      >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question..."
+          placeholder="想问什么？随便聊～"
           disabled={isStreaming}
-          className="flex-1 min-w-0 px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground disabled:opacity-50"
+          className="flex-1 min-w-0 px-3 py-2 text-sm bg-background border border-border/50 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/40 placeholder:text-muted-foreground/60 disabled:opacity-50 transition-shadow"
         />
         <Button
           type="submit"
           size="icon"
           disabled={!input.trim() || isStreaming}
-          className="shrink-0 h-9 w-9"
+          className="shrink-0 h-9 w-9 rounded-lg"
         >
           {isStreaming ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -193,7 +222,9 @@ function MessageBubble({
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+    <div
+      className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+    >
       <Avatar className="w-7 h-7 shrink-0">
         <AvatarFallback
           className={
@@ -202,17 +233,25 @@ function MessageBubble({
               : "bg-muted text-muted-foreground text-xs"
           }
         >
-          {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+          {isUser ? (
+            <User className="w-4 h-4" />
+          ) : (
+            <Bot className="w-4 h-4" />
+          )}
         </AvatarFallback>
       </Avatar>
       <div
-        className={`max-w-[80%] md:max-w-[70%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
+        className={`max-w-[80%] md:max-w-[70%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
           isUser
             ? "bg-primary text-primary-foreground"
             : "bg-muted text-foreground"
         }`}
       >
-        <span className={isStreaming && isLast && !message.content ? "typing-cursor" : ""}>
+        <span
+          className={
+            isStreaming && isLast && !message.content ? "typing-cursor" : ""
+          }
+        >
           {message.content || (isStreaming ? "" : "...")}
         </span>
       </div>

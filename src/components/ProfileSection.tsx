@@ -1,94 +1,76 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Code2, Cpu, Lightbulb, MessageSquare } from "lucide-react";
+import { Code2, MessageCircle, MessageSquare } from "lucide-react";
 
-interface ProfileSectionProps {
-  avatarUrl: string;
-}
+const AVATAR_URL =
+  "https://miaoda-site-img.cdn.bcebos.com/images/baidu_image_search_828b7a9d-a871-4be7-a805-5f6ca0909a4c.jpg";
 
-export default function ProfileSection({ avatarUrl }: ProfileSectionProps) {
+export default function ProfileSection() {
   return (
-    <div className="flex flex-col items-center md:items-start gap-6">
-      {/* Avatar */}
-      <Avatar className="w-24 h-24 md:w-32 md:h-32 border-2 border-primary/20 shadow-sm">
-        <AvatarImage src={avatarUrl} alt="chench avatar" className="object-cover" />
-        <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
-          C
-        </AvatarFallback>
-      </Avatar>
+    <div className="flex flex-col items-center gap-6">
+      {/* Avatar — compact, not competing with name */}
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent blur-sm scale-110" />
+        <Avatar className="relative w-20 h-20 md:w-24 md:h-24 ring-2 ring-primary/10 ring-offset-2 ring-offset-background">
+          <AvatarImage
+            src={AVATAR_URL}
+            alt="chench avatar"
+            className="object-cover"
+          />
+          <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+            C
+          </AvatarFallback>
+        </Avatar>
+      </div>
 
-      {/* Name & Intro */}
-      <div className="text-center md:text-left space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+      {/* Name & Tagline — clear hierarchy */}
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
           chench
         </h1>
-        <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+        <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
           An engineer learning to build products with AI
         </p>
-        <p className="text-sm text-muted-foreground/80">
+        <p className="text-sm text-muted-foreground/70">
           喜欢把复杂问题讲成人话的工程师
         </p>
       </div>
 
-      <Separator className="w-full" />
+      {/* Bio paragraph */}
+      <p className="text-sm text-foreground/75 leading-relaxed max-w-md text-center">
+        目前在从事嵌入式软件开发与产品设计，专注 vibe
+        coding、嵌入式架构和个人效率工作流搭建。对 AI
+        应用、架构设计和底层原理充满好奇，相信好的技术应该让人更容易理解，而不是更困惑。
+      </p>
 
-      {/* Info Cards */}
-      <div className="w-full space-y-4">
-        <InfoItem
-          icon={<Code2 className="w-4 h-4 text-primary" />}
-          label="Currently"
-          value="Embedded Software Development & Product Design"
-        />
-        <InfoItem
-          icon={<Cpu className="w-4 h-4 text-primary" />}
-          label="Focus"
-          value="Vibe Coding · Embedded Architecture · Building Personal Homepage"
-        />
-        <InfoItem
-          icon={<Lightbulb className="w-4 h-4 text-primary" />}
-          label="Interests"
-          value="AI Applications · Architecture · Tech Stacks"
-        />
+      {/* Contact */}
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <a
+          href="tencent://message/?uin=1462446123"
+          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span>1462446123</span>
+        </a>
+        <span className="text-border/50">·</span>
+        <a
+          href="https://github.com/dark-cc"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+        >
+          <Code2 className="w-3.5 h-3.5" />
+          <span>dark-cc</span>
+        </a>
       </div>
 
-      <Separator className="w-full" />
-
-      {/* Tags */}
-      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-        <Badge variant="secondary" className="text-xs font-normal">
-          <MessageSquare className="w-3 h-3 mr-1" />
-          Ask me anything
-        </Badge>
-        <Badge variant="outline" className="text-xs font-normal">
-          Open Source
-        </Badge>
-        <Badge variant="outline" className="text-xs font-normal">
-          Community Builder
-        </Badge>
-      </div>
-    </div>
-  );
-}
-
-function InfoItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {label}
-        </p>
-        <p className="text-sm text-foreground mt-0.5 leading-relaxed">{value}</p>
-      </div>
+      {/* Primary CTA — chat entry anchor */}
+      <a
+        href="#chat"
+        className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-sm text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
+      >
+        <MessageSquare className="w-3.5 h-3.5" />
+        Ask me anything
+      </a>
     </div>
   );
 }
