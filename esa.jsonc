@@ -1,5 +1,6 @@
 {
-  "function": {
-    "entry": "index.ts"
+  "build": {
+    "command": "npm install && npm run build",
+    "output": "dist"
   }
 }
