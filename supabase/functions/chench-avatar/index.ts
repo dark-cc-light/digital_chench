@@ -32,7 +32,10 @@ export default {
     }
 
     if (req.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
+      return new Response(
+        JSON.stringify({ status: "ok", message: "chench avatar function is running. Send a POST request to chat." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     let messages: Array<{ role: string; content: string }>;
