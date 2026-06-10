@@ -78,3 +78,33 @@
 | 文件 | 改动 |
 |------|------|
 | `src/components/ProfileSection.tsx` | 在 Bio 段落和 CTA 之间插入联系方式行：QQ `1462446123`（可点击唤起 QQ）+ GitHub `dark-cc`（跳转 `https://github.com/dark-cc`）；`text-sm text-muted-foreground`，hover 变 `text-foreground`；中间用 `·` 分隔 |
+
+---
+
+## 第 7 轮 — 联系方式加图标 (2026-06-10)
+
+**目标：** QQ 和 GitHub 前加符合功能的小图标。
+
+### 改动文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/ProfileSection.tsx` | QQ 前加 `MessageCircle` 图标（聊天气泡），GitHub 前加 `Code2` 图标（代码尖括号）；清理未使用的 `Badge` 导入 |
+
+---
+
+## 第 8 轮 — 修复聊天撑高页面 (2026-06-10)
+
+**目标：** 聊天时页面整体高度不变，聊天框内部滚动。
+
+### 改动文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/pages/HomePage.tsx` | Chat section 去掉 `justify-center`，wrapper div 加 `h-full`，section 加 `overflow-hidden`，补全高度链条让 ChatSection 的 `h-full` 生效 |
+
+---
+
+## 第 9 轮 — 推送 GitHub (2026-06-10)
+
+**操作：** 添加 remote `https://github.com/dark-cc-light/digital_chench.git`，推送 master 分支到 GitHub。
