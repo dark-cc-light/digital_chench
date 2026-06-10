@@ -14,9 +14,9 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "What are you working on?",
-  "How can I contact you?",
-  "What are your future plans?",
+  { label: "在做什么 / What are you working on?", value: "What are you working on?" },
+  { label: "怎么联系 / How can I contact you?", value: "How can I contact you?" },
+  { label: "未来规划 / What are your future plans?", value: "What are your future plans?" },
 ];
 
 export default function ChatSection() {
@@ -142,12 +142,12 @@ export default function ChatSection() {
           <div className="flex flex-col gap-2 items-start">
             {SUGGESTED_QUESTIONS.map((q) => (
               <button
-                key={q}
+                key={q.value}
                 type="button"
-                onClick={() => handleSend(q)}
+                onClick={() => handleSend(q.value)}
                 className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-accent text-foreground transition-colors whitespace-nowrap"
               >
-                {q}
+                {q.label}
               </button>
             ))}
           </div>
