@@ -108,3 +108,22 @@
 ## 第 9 轮 — 推送 GitHub (2026-06-10)
 
 **操作：** 添加 remote `https://github.com/dark-cc-light/digital_chench.git`，推送 master 分支到 GitHub。
+
+---
+
+## 第 10 轮 — 新增作品展示区 (2026-06-10)
+
+**目标：** 让访客更快知道做过什么，保持暖调风格，不新增太多模块。
+
+### 改动文件
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/PortfolioSection.tsx` | **新建** — 2 张紧凑项目卡片（个人主页 + 嵌入式工具链），emoji 图标 + 项目名 + 一句话描述 + GitHub 链接；`bg-muted/30 rounded-xl`，hover 加深背景、项目名变主题色 |
+| `src/pages/HomePage.tsx` | 导入 PortfolioSection，插入左列 ProfileSection 下方（`gap-8`）；左列结构变为：Profile → Portfolio →（聊天在右列） |
+
+### 聊天入口检查
+
+- 右列聊天区仍在视口内、卡片样式 + 标题足够显眼
+- "Ask me anything" CTA 锚点 `#chat` 仍指向右列
+- 移动端各区块自然堆叠

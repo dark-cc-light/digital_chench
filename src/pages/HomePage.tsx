@@ -1,4 +1,5 @@
 import ProfileSection from "@/components/ProfileSection";
+import PortfolioSection from "@/components/PortfolioSection";
 import ChatSection from "@/components/ChatSection";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun } from "lucide-react";
@@ -23,8 +24,9 @@ export default function HomePage() {
       <main className="max-w-6xl mx-auto px-4 md:px-8 pb-8">
         <div className="flex flex-col md:flex-row justify-center gap-8 md:gap-28 md:h-[calc(100vh-80px)]">
           {/* Profile Column */}
-          <section className="md:w-80 lg:w-96 shrink-0 flex flex-col justify-center">
+          <section className="md:w-80 lg:w-96 shrink-0 flex flex-col justify-start gap-8">
             <ProfileSection />
+            <PortfolioSection />
           </section>
 
           {/* Chat Column */}

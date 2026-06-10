@@ -1,0 +1,1466 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PC 上位机页面与交互审核原型</title>
+  <style>
+    :root {
+      --bg: #d8dee7;
+      --window: #f7f9fc;
+      --chrome: #edf2f7;
+      --panel: #ffffff;
+      --line: #cfd8e3;
+      --line-dark: #aeb9c8;
+      --text: #17202c;
+      --muted: #617083;
+      --primary: #0b6fb3;
+      --primary-dark: #07588e;
+      --ok: #11875d;
+      --warn: #b86b00;
+      --danger: #bf3a46;
+      --console: #101a27;
+      --console-text: #dceafe;
+      --shadow: 0 18px 45px rgba(22, 34, 51, .18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0)),
+        var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1220px, 100vw);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .desktop-window {
+      min-height: 720px;
+      border: 1px solid #9eabba;
+      border-radius: 8px;
+      background: var(--window);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 34px 34px 50px minmax(0, 1fr) 28px;
+    }
+
+    .titlebar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px;
+      background: #182231;
+      color: #fff;
+      user-select: none;
+    }
+
+    .app-mark {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .app-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: var(--primary);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+    }
+
+    .titlebar-center {
+      overflow: hidden;
+      color: #d6e2ef;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .window-buttons {
+      display: flex;
+      gap: 7px;
+    }
+
+    .window-buttons span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #8796a8;
+    }
+
+    .window-buttons span:nth-child(1) {
+      background: #5aa0d8;
+    }
+
+    .window-buttons span:nth-child(2) {
+      background: #d8aa37;
+    }
+
+    .window-buttons span:nth-child(3) {
+      background: #d95d5d;
+    }
+
+    .menubar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--line);
+      background: #f4f7fb;
+      color: #293648;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .menu-item {
+      min-height: 25px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: inherit;
+      padding: 0 10px;
+      cursor: pointer;
+    }
+
+    .menu-item:hover {
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: auto auto auto auto auto auto auto auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--chrome);
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .tool-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .select,
+    .input {
+      height: 32px;
+      border: 1px solid var(--line-dark);
+      border-radius: 5px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 9px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .select {
+      min-width: 100px;
+    }
+
+    .input.short {
+      width: 86px;
+      text-align: center;
+    }
+
+    .btn {
+      min-height: 32px;
+      border: 1px solid var(--primary-dark);
+      border-radius: 5px;
+      background: var(--primary);
+      color: #fff;
+      padding: 0 11px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn.secondary {
+      border-color: var(--line-dark);
+      background: #fff;
+      color: var(--text);
+    }
+
+    .btn.secondary:hover {
+      background: #eef3f8;
+    }
+
+    .btn.danger {
+      border-color: #9f2632;
+      background: var(--danger);
+    }
+
+    .stats-strip {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      color: #36475c;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .stat-ok {
+      color: var(--ok);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      min-height: 0;
+      background: #e5ebf2;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #f8fafc;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .pane-title {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f1f5f9;
+      font-weight: 800;
+    }
+
+    .tree {
+      overflow: auto;
+      padding: 10px;
+    }
+
+    .tree-section {
+      margin-bottom: 12px;
+    }
+
+    .tree-heading {
+      margin: 8px 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .tree-item {
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 7px;
+      padding: 0 8px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .tree-item:hover {
+      border-color: var(--line);
+      background: #fff;
+    }
+
+    .tree-item.active {
+      border-color: #9bc6e8;
+      background: #e9f4ff;
+      color: var(--primary);
+    }
+
+    .tree-icon {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 2px 7px;
+      background: #e8edf4;
+      color: #46566a;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .tag.ok {
+      background: #e8f6ef;
+      color: var(--ok);
+    }
+
+    .tag.warn {
+      background: #fff4df;
+      color: var(--warn);
+    }
+
+    .main-area {
+      display: grid;
+      grid-template-rows: 38px minmax(0, 1fr);
+      min-width: 0;
+      min-height: 0;
+      border-right: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .tabs {
+      display: flex;
+      align-items: end;
+      gap: 2px;
+      overflow-x: auto;
+      padding: 6px 8px 0;
+      border-bottom: 1px solid var(--line);
+      background: #f7f9fc;
+    }
+
+    .tab {
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-bottom: 0;
+      border-radius: 6px 6px 0 0;
+      background: #edf2f7;
+      color: #35465a;
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: #fff;
+      color: var(--primary);
+      border-color: #b9cce0;
+    }
+
+    .content {
+      min-height: 0;
+      overflow: auto;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .console {
+      display: grid;
+      grid-template-rows: 38px minmax(0, 1fr) 42px;
+      min-height: 0;
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .console-tabs {
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+      background: #f7f9fc;
+    }
+
+    .console-tab {
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #fff;
+      padding: 0 9px;
+      color: #344457;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .console-tab.active {
+      border-color: var(--primary);
+      background: #e9f4ff;
+      color: var(--primary);
+    }
+
+    .terminal {
+      min-height: 0;
+      overflow: auto;
+      background: var(--console);
+      color: var(--console-text);
+      padding: 8px 10px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .serial-workbench {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      min-height: 100%;
+    }
+
+    .terminal-line {
+      display: grid;
+      grid-template-columns: 36px 74px minmax(0, 1fr);
+      gap: 9px;
+      white-space: nowrap;
+    }
+
+    .terminal-line span:nth-child(3) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rx {
+      color: #7dd3fc;
+      font-weight: 800;
+    }
+
+    .tx {
+      color: #86efac;
+      font-weight: 800;
+    }
+
+    .sendbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto auto auto auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-top: 1px solid var(--line);
+      background: #f7f9fc;
+    }
+
+    .send-input {
+      height: 30px;
+      border: 1px solid var(--line-dark);
+      border-radius: 5px;
+      background: #fff;
+      padding: 0 9px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      color: #344457;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .check-label input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--primary);
+    }
+
+    .statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 10px;
+      border-top: 1px solid var(--line-dark);
+      background: #eef2f7;
+      color: #405066;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .card-head {
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+      background: #f7f9fc;
+      font-weight: 800;
+    }
+
+    .card-body {
+      padding: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f8fafc;
+      padding: 10px;
+      min-height: 78px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric-value {
+      margin-top: 7px;
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .metric-value small {
+      margin-left: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th,
+    .table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .table th {
+      background: #f1f5f9;
+      color: #405066;
+      font-weight: 800;
+    }
+
+    .table tr:hover td {
+      background: #f8fbff;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 4px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .field .input,
+    .field .select {
+      width: 100%;
+    }
+
+    .chart {
+      height: 180px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(0deg, transparent 0 29px, #e1e8f0 30px),
+        repeating-linear-gradient(90deg, transparent 0 79px, #e1e8f0 80px),
+        #fbfdff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .quick-card {
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .quick-card:hover {
+      border-color: var(--primary);
+      background: #e9f4ff;
+    }
+
+    .quick-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .quick-title {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 900;
+    }
+
+    .quick-desc {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(15, 23, 42, .42);
+      z-index: 20;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(1080px, 100%);
+      max-height: min(720px, 92vh);
+      border: 1px solid #9eabba;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: 44px minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f7f9fc;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 12px;
+      min-height: 0;
+      padding: 12px;
+    }
+
+    .review-table-wrap {
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .review-table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 13px;
+    }
+
+    .review-table th,
+    .review-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px;
+      vertical-align: top;
+      text-align: left;
+      line-height: 1.5;
+    }
+
+    .review-table th {
+      background: #f1f5f9;
+      color: #405066;
+      font-weight: 900;
+    }
+
+    .review-table td {
+      outline: none;
+    }
+
+    .review-table td:focus {
+      background: #fff8e6;
+      box-shadow: inset 0 0 0 2px #e6a700;
+    }
+
+    .review-table th:first-child,
+    .review-table td:first-child {
+      width: 98px;
+      font-weight: 900;
+    }
+
+    .markdown-output {
+      width: 100%;
+      height: 100%;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      resize: none;
+      background: #fff;
+      color: #243145;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      transform: translateY(24px);
+      opacity: 0;
+      min-width: 170px;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #17202c;
+      color: #fff;
+      box-shadow: var(--shadow);
+      transition: .18s ease;
+      pointer-events: none;
+      font-size: 14px;
+      z-index: 30;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 1050px) {
+      .shell {
+        padding: 10px;
+      }
+
+      .desktop-window {
+        min-height: 760px;
+      }
+
+      .toolbar {
+        grid-template-columns: repeat(3, auto) 1fr;
+        overflow-x: auto;
+      }
+
+      .workspace {
+        grid-template-columns: 210px minmax(0, 1fr);
+      }
+
+      .console {
+        grid-column: 2 / 3;
+      }
+
+      .modal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="desktop-window" aria-label="PC desktop host platform prototype">
+      <header class="titlebar">
+        <div class="app-mark"><span class="app-icon"></span><span>multi-protocol-hmi</span></div>
+        <div class="titlebar-center" id="windowTitle">Windows 上位机 - 首页/总览</div>
+        <div class="window-buttons" aria-hidden="true"><span></span><span></span><span></span></div>
+      </header>
+
+      <nav class="menubar" aria-label="menu bar">
+        <button class="menu-item" type="button">文件</button>
+        <button class="menu-item" type="button">连接</button>
+        <button class="menu-item" type="button">设备</button>
+        <button class="menu-item" type="button">数据</button>
+        <button class="menu-item" type="button">工具</button>
+        <button class="menu-item" type="button">帮助</button>
+      </nav>
+
+      <section class="toolbar" aria-label="connection toolbar">
+        <div class="tool-group">
+          <span class="tool-label">串口</span>
+          <select class="select" aria-label="串口号"><option>COM3</option><option>COM4</option><option>COM5</option></select>
+        </div>
+        <div class="tool-group">
+          <span class="tool-label">波特率</span>
+          <select class="select" aria-label="波特率"><option>115200</option><option>9600</option><option>57600</option></select>
+        </div>
+        <div class="tool-group">
+          <span class="tool-label">数据位</span>
+          <select class="select" aria-label="数据位"><option>8 bit</option><option>7 bit</option><option>6 bit</option><option>5 bit</option></select>
+        </div>
+        <div class="tool-group">
+          <span class="tool-label">校验位</span>
+          <select class="select" aria-label="校验位"><option>None</option><option>Even</option><option>Odd</option></select>
+        </div>
+        <div class="tool-group">
+          <span class="tool-label">停止位</span>
+          <select class="select" aria-label="停止位"><option>1 bit</option><option>1.5 bit</option><option>2 bit</option></select>
+        </div>
+        <button class="btn" type="button">连接</button>
+        <button class="btn secondary" type="button">刷新串口</button>
+        <div></div>
+        <div class="stats-strip">
+          <span class="stat-ok">COM3 已连接</span>
+          <span>RX 12,486 B</span>
+          <span>TX 1,024 B</span>
+          <span>CRC 0</span>
+        </div>
+      </section>
+
+      <section class="workspace" id="workspace">
+        <aside class="sidebar">
+          <div class="pane-title"><span>项目导航</span><span class="tag ok">在线</span></div>
+          <div class="tree">
+            <div class="tree-section">
+              <div class="tree-heading">设备</div>
+              <button class="tree-item" type="button" data-page="overview"><span class="tree-icon">▣</span><span>设备总览</span><span class="tag ok">3</span></button>
+              <button class="tree-item" type="button" data-page="serial"><span class="tree-icon">↔</span><span>串口连接</span><span class="tag ok">COM3</span></button>
+              <button class="tree-item" type="button" data-page="monitor"><span class="tree-icon">▥</span><span>实时监控</span><span class="tag">4 点</span></button>
+              <button class="tree-item" type="button" data-page="params"><span class="tree-icon">⚙</span><span>参数配置</span><span class="tag warn">未保存</span></button>
+            </div>
+            <div class="tree-section">
+              <div class="tree-heading">数据</div>
+              <button class="tree-item" type="button" data-page="alarms"><span class="tree-icon">!</span><span>报警记录</span><span class="tag warn">1</span></button>
+              <button class="tree-item" type="button" data-page="history"><span class="tree-icon">◇</span><span>历史数据</span><span class="tag">CSV</span></button>
+              <button class="tree-item" type="button" data-page="settings"><span class="tree-icon">i</span><span>系统设置</span><span class="tag">v0.1</span></button>
+            </div>
+            <div class="tree-section">
+              <div class="tree-heading">工具</div>
+              <button class="tree-item" type="button" id="openPrdBtn"><span class="tree-icon">MD</span><span>PRD 表格</span><span class="tag">编辑</span></button>
+            </div>
+          </div>
+        </aside>
+
+        <section class="main-area">
+          <div class="tabs" id="tabs"></div>
+          <div class="content" id="content"></div>
+        </section>
+
+      </section>
+
+      <footer class="statusbar">
+        <span>保存路径：./save | 配置：config.example.json | 当前用户：工程师</span>
+        <span id="statusPage">首页/总览</span>
+      </footer>
+    </section>
+  </main>
+
+  <section class="modal-backdrop" id="prdModal" aria-label="PRD table editor">
+    <div class="modal">
+      <div class="modal-head">
+        <span>PRD 第 9 节表格草稿</span>
+        <div class="tool-group">
+          <button class="btn secondary" type="button" id="addRowBtn">新增页面</button>
+          <button class="btn secondary" type="button" id="resetBtn">恢复初稿</button>
+          <button class="btn" type="button" id="copyBtn">复制 Markdown</button>
+          <button class="btn secondary" type="button" id="closePrdBtn">关闭</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="review-table-wrap">
+          <table class="review-table">
+            <thead>
+              <tr>
+                <th>页面</th>
+                <th>主要功能</th>
+                <th>关键控件</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="reviewRows"></tbody>
+          </table>
+        </div>
+        <textarea class="markdown-output" id="markdownOutput" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast">已复制</div>
+
+  <script>
+    const initialPages = [
+      {
+        id: "overview",
+        page: "首页/总览",
+        feature: "展示设备在线状态、通信质量、当前告警、关键采样值和最近操作记录；作为开机后的默认工作台。",
+        controls: "状态卡片、设备列表、告警条、实时指标卡、最近日志、快捷导航按钮。",
+        note: "MVP 只展示单设备或少量设备；后续支持多设备分组和自定义看板。"
+      },
+      {
+        id: "serial",
+        page: "设备连接",
+        feature: "完成串口扫描、串口参数配置、连接/断开、原始串口日志查看、手动发送帧和自动发送测试。",
+        controls: "串口号下拉、波特率、数据位、停止位、校验位、连接按钮、HEX/ASCII 切换、自动发送间隔、发送历史。",
+        note: "连接失败、超时、端口占用必须给出明确提示；串口层不要直接耦合 UI。"
+      },
+      {
+        id: "monitor",
+        page: "实时监控",
+        feature: "根据设备物模型显示采样点实时值、单位、状态、更新时间和短周期趋势。",
+        controls: "设备选择、点位表、状态标签、趋势图、刷新周期、暂停/恢复采集按钮。",
+        note: "需要支持异常值、离线、超限、CRC 错误等状态展示。"
+      },
+      {
+        id: "params",
+        page: "参数配置",
+        feature: "维护设备配置参数模型定义，描述每个配置项对应的 Modbus RTU 地址、数据类型、权限、单位和约束。",
+        controls: "新增参数、编辑参数、删除参数、参数表、Modbus 地址、参数分类、数据类型、访问权限、单位、小数位、上下限、说明。",
+        note: "本页面只维护参数模型，不直接读取或写入设备；新增和修改必须校验地址、类型、权限、上下限和小数位。"
+      },
+      {
+        id: "alarms",
+        page: "报警记录",
+        feature: "展示报警触发、恢复、确认和历史查询，支持按设备、级别、状态和时间筛选。",
+        controls: "报警表格、级别筛选、状态筛选、时间范围、确认按钮、导出按钮。",
+        note: "报警规则要能追溯到点位、阈值和触发条件；不能静默清除。"
+      },
+      {
+        id: "history",
+        page: "历史数据",
+        feature: "查询指定时间范围内的采样数据，展示趋势曲线、峰值、均值和导出结果。",
+        controls: "时间范围选择、点位多选、曲线图、统计卡片、CSV/Excel 导出按钮。",
+        note: "MVP 优先 CSV；Excel 可作为后续增强。需要明确数据保存周期和文件路径。"
+      },
+      {
+        id: "settings",
+        page: "系统设置",
+        feature: "配置数据保存路径、日志保留周期、通信默认参数、主题、诊断导出和版本信息。",
+        controls: "保存路径选择、保留周期、默认串口参数、诊断包导出、清理日志、版本信息。",
+        note: "真实配置文件不得提交到 Git；提供 example 配置和错误提示。"
+      }
+    ];
+
+    let pages = JSON.parse(JSON.stringify(initialPages));
+    let currentPageId = "overview";
+
+    const tabs = document.getElementById("tabs");
+    const content = document.getElementById("content");
+    const statusPage = document.getElementById("statusPage");
+    const windowTitle = document.getElementById("windowTitle");
+    const reviewRows = document.getElementById("reviewRows");
+    const markdownOutput = document.getElementById("markdownOutput");
+    const prdModal = document.getElementById("prdModal");
+    const toast = document.getElementById("toast");
+
+    function normalizeText(value) {
+      return String(value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function escapeMarkdown(value) {
+      return normalizeText(value).replace(/\|/g, "\\|");
+    }
+
+    function currentPage() {
+      return pages.find((item) => item.id === currentPageId) || pages[0];
+    }
+
+    function buildMarkdown() {
+      const lines = [
+        "| 页面 | 主要功能 | 关键控件 | 备注 |",
+        "| :--- | :------- | :------- | :--- |"
+      ];
+      pages.forEach((item) => {
+        lines.push(
+          `| ${escapeMarkdown(item.page)} | ${escapeMarkdown(item.feature)} | ` +
+          `${escapeMarkdown(item.controls)} | ${escapeMarkdown(item.note)} |`
+        );
+      });
+      return lines.join("\n");
+    }
+
+    function renderTabs() {
+      tabs.innerHTML = pages.map((item) => `
+        <button class="tab${item.id === currentPageId ? " active" : ""}" type="button" data-page="${item.id}">
+          ${escapeHtml(item.page)}
+        </button>
+      `).join("");
+      tabs.querySelectorAll("[data-page]").forEach((button) => {
+        button.addEventListener("click", () => showPage(button.dataset.page));
+      });
+    }
+
+    function showPage(pageId) {
+      currentPageId = pageId;
+      const page = currentPage();
+      windowTitle.textContent = `Windows 上位机 - ${page.page}`;
+      statusPage.textContent = page.page;
+      document.querySelectorAll(".tree-item[data-page]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === pageId);
+      });
+      renderTabs();
+      renderContent(page);
+    }
+
+    function renderContent(page) {
+      if (page.id === "serial") content.innerHTML = serialHtml();
+      else if (page.id === "monitor") content.innerHTML = monitorHtml();
+      else if (page.id === "params") content.innerHTML = paramsHtml();
+      else if (page.id === "alarms") content.innerHTML = alarmsHtml();
+      else if (page.id === "history") content.innerHTML = historyHtml();
+      else if (page.id === "settings") content.innerHTML = settingsHtml();
+      else content.innerHTML = overviewHtml();
+
+      content.querySelectorAll("[data-jump]").forEach((button) => {
+        button.addEventListener("click", () => showPage(button.dataset.jump));
+      });
+    }
+
+    function overviewHtml() {
+      return `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-head"><span>运行总览</span><span class="tag ok">在线</span></div>
+            <div class="card-body grid cols-3">
+              <div class="metric"><div class="metric-label">连接终端</div><div class="metric-value">4</div></div>
+              <div class="metric"><div class="metric-label">在线设备</div><div class="metric-value">3</div></div>
+              <div class="metric"><div class="metric-label">当前告警</div><div class="metric-value">1</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span>快捷操作</span><span class="tag">工作台</span></div>
+            <div class="card-body grid cols-2">
+              ${quickCard("serial", "↔", "设备连接", "配置串口、查看原始日志")}
+              ${quickCard("monitor", "▥", "实时监控", "查看点位和趋势")}
+              ${quickCard("alarms", "!", "报警记录", "确认报警和导出")}
+              ${quickCard("history", "◇", "历史数据", "查询曲线和 CSV")}
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 10px;">
+          <div class="card-head"><span>设备列表</span><span class="tag ok">3 在线</span></div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>设备</th><th>接口</th><th>状态</th><th>最后数据</th><th>告警</th></tr></thead>
+              <tbody>
+                <tr><td>F407-USB-UART</td><td>COM3</td><td class="stat-ok">在线</td><td>28 ms 前</td><td>0</td></tr>
+                <tr><td>温湿度终端</td><td>COM4</td><td class="stat-ok">在线</td><td>1.2 s 前</td><td>0</td></tr>
+                <tr><td>压力采集器</td><td>COM5</td><td style="color: var(--warn);">告警</td><td>3.5 s 前</td><td>1</td></tr>
+                <tr><td>备用终端</td><td>COM6</td><td>离线</td><td>12 min 前</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function quickCard(page, icon, title, desc) {
+      return `
+        <button class="quick-card" type="button" data-jump="${page}">
+          <span class="quick-icon">${escapeHtml(icon)}</span>
+          <span>
+            <span class="quick-title">${escapeHtml(title)}</span>
+            <span class="quick-desc">${escapeHtml(desc)}</span>
+          </span>
+        </button>
+      `;
+    }
+
+    function serialHtml() {
+      return `
+        <div class="serial-workbench">
+          ${serialConsoleHtml()}
+        </div>
+      `;
+    }
+
+    function serialConsoleHtml() {
+      return `
+        <section class="console">
+          <div class="console-tabs">
+            <button class="console-tab active" type="button">串口原始日志</button>
+            <button class="console-tab" type="button">通信统计</button>
+            <button class="console-tab" type="button">诊断日志</button>
+            <span></span>
+            <label class="check-label"><input type="checkbox" checked aria-label="显示时间戳"><span>时间戳</span></label>
+          </div>
+          <div class="terminal" aria-label="serial raw log">
+            <div class="terminal-line"><span class="rx">RX</span><span>14:28:32</span><span>01 03 08 00 FA 01 2C 13 88 00 64</span></div>
+            <div class="terminal-line"><span class="tx">TX</span><span>14:28:33</span><span>01 03 00 00 00 04 44 09</span></div>
+            <div class="terminal-line"><span class="rx">RX</span><span>14:28:34</span><span>01 03 08 00 FB 01 30 13 84 00 66</span></div>
+            <div class="terminal-line"><span class="tx">TX</span><span>14:28:36</span><span>01 06 00 10 00 01 49 CF</span></div>
+            <div class="terminal-line"><span class="rx">RX</span><span>14:28:37</span><span>01 06 00 10 00 01 49 CF</span></div>
+            <div class="terminal-line"><span class="tx">TX</span><span>14:28:39</span><span>01 03 00 04 00 02 85 CA</span></div>
+          </div>
+          <div class="sendbar">
+            <input class="send-input" value="01 03 00 00 00 04" aria-label="发送帧">
+            <select class="select" aria-label="发送格式"><option>HEX</option><option>ASCII</option></select>
+            <label class="check-label"><input type="checkbox" aria-label="追加回车换行"><span>\r\n</span></label>
+            <label class="check-label"><input type="checkbox" aria-label="启用自动发送"><span>自动发送</span></label>
+            <input class="input short" type="number" min="100" step="100" value="1000" aria-label="自动发送间隔">
+            <span class="tool-label">ms</span>
+            <button class="btn" type="button">发送</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function field(label, value) {
+      return `<div class="field"><label>${escapeHtml(label)}</label><input class="input" value="${escapeHtml(value)}"></div>`;
+    }
+
+    function monitorHtml() {
+      return `
+        <div class="grid">
+          <div class="card">
+            <div class="card-head"><span>实时点位</span><span class="tag ok">运行</span></div>
+            <div class="card-body grid cols-2">
+              <div class="metric"><div class="metric-label">温度（温湿度终端）</div><div class="metric-value">25.0<small>℃</small></div></div>
+              <div class="metric"><div class="metric-label">压力（压力采集器）</div><div class="metric-value">30.0<small>MPa</small></div></div>
+              <div class="metric"><div class="metric-label">密度（压力采集器）</div><div class="metric-value">5.00<small>MPa</small></div></div>
+              <div class="metric"><div class="metric-label">流量（F407-USB）</div><div class="metric-value">1.00<small>L/min</small></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span>短周期趋势</span><span class="tag">最近 10 分钟</span></div>
+            <div class="card-body">${chartHtml()}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function paramsHtml() {
+      return `
+        <div class="grid">
+          <div class="card">
+            <div class="card-head">
+              <span>Modbus RTU 参数定义</span>
+              <span class="tag warn">未保存</span>
+            </div>
+            <div class="card-body">
+              <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <button class="btn" type="button">新增参数</button>
+                <button class="btn secondary" type="button">编辑选中</button>
+                <button class="btn danger" type="button">删除选中</button>
+                <button class="btn secondary" type="button">导入模板</button>
+                <button class="btn secondary" type="button">导出模板</button>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>参数名</th>
+                    <th>显示名</th>
+                    <th>地址</th>
+                    <th>分类</th>
+                    <th>类型</th>
+                    <th>权限</th>
+                    <th>单位</th>
+                    <th>小数</th>
+                    <th>范围</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>temperature</td><td>温度</td><td>0x0000</td><td>采样参数</td><td>uint16</td><td>只读</td><td>℃</td><td>1</td><td>-40 ~ 125</td><td>缩放 0.1</td></tr>
+                  <tr><td>pressure</td><td>压力</td><td>0x0001</td><td>采样参数</td><td>uint16</td><td>只读</td><td>MPa</td><td>2</td><td>0 ~ 60</td><td>缩放 0.01</td></tr>
+                  <tr><td>sample_period</td><td>采样周期</td><td>0x0010</td><td>配置参数</td><td>uint16</td><td>读写</td><td>ms</td><td>0</td><td>200 ~ 5000</td><td>写入需确认</td></tr>
+                  <tr><td>device_addr</td><td>设备地址</td><td>0x0011</td><td>配置参数</td><td>uint8</td><td>读写</td><td>-</td><td>0</td><td>1 ~ 247</td><td>Modbus 从站地址</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span>新增 / 修改参数</span><span class="tag">表单</span></div>
+            <div class="card-body">
+              <div class="form-grid">
+                ${field("参数名", "sample_period")}
+                ${field("显示名", "采样周期")}
+                ${field("Modbus 地址", "0x0010")}
+                <div class="field"><label>参数分类</label><select class="select"><option>采样参数</option><option>配置参数</option></select></div>
+                <div class="field"><label>数据类型</label><select class="select"><option>uint16</option><option>int16</option><option>uint32</option><option>int32</option><option>float32</option><option>bool</option></select></div>
+                <div class="field"><label>访问权限</label><select class="select"><option>只读</option><option>只写</option><option>读写</option></select></div>
+                ${field("单位", "ms")}
+                ${field("小数位数", "0")}
+                ${field("最小值", "200")}
+                ${field("最大值", "5000")}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>说明（可选）</label>
+                  <input class="input" value="配置采样周期，写入前需要范围校验和二次确认">
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn" type="button">保存定义</button>
+                <button class="btn secondary" type="button">校验定义</button>
+                <button class="btn secondary" type="button">取消修改</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function alarmsHtml() {
+      return `
+        <div class="card">
+          <div class="card-head"><span>报警记录</span><span class="tag warn">1 未确认</span></div>
+          <div class="card-body">
+            <table class="table">
+              <thead><tr><th>时间</th><th>内容</th><th>终端</th><th>级别</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>18:27:58</td><td>压力接近上限</td><td>压力采集器</td><td>预警</td><td style="color: var(--warn);">未确认</td></tr>
+                <tr><td>18:18:22</td><td>CRC 异常帧已丢弃</td><td>COM3</td><td>一般</td><td>已确认</td></tr>
+                <tr><td>17:52:09</td><td>备用终端离线超过 10 分钟</td><td>备用终端</td><td>提示</td><td>已确认</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function historyHtml() {
+      return `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-head"><span>查询条件</span><span class="tag">CSV</span></div>
+            <div class="card-body">
+              <div class="form-grid">
+                ${field("开始时间", "2026-06-10 00:00")}
+                ${field("结束时间", "2026-06-10 23:59")}
+                ${field("点位", "温度 / 压力 / 流量")}
+                ${field("导出格式", "CSV")}
+              </div>
+              <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn">查询</button>
+                <button class="btn secondary">导出</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span>趋势曲线</span><span class="tag">统计</span></div>
+            <div class="card-body">${chartHtml()}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function settingsHtml() {
+      return `
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="card-head"><span>软件信息</span><span class="tag ok">正常</span></div>
+            <div class="card-body">
+              <table class="table">
+                <tbody>
+                  <tr><td>软件名称</td><td>multi-protocol-hmi</td></tr>
+                  <tr><td>应用版本</td><td>v0.1.0</td></tr>
+                  <tr><td>运行平台</td><td>Windows 10/11</td></tr>
+                  <tr><td>运行时长</td><td>12:36:18</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span>维护操作</span><span class="tag">诊断</span></div>
+            <div class="card-body">
+              <table class="table">
+                <tbody>
+                  <tr><td>数据保存路径</td><td>./save</td></tr>
+                  <tr><td>日志空间</td><td>128 / 512 MB</td></tr>
+                  <tr><td>配置文件</td><td>config.example.json</td></tr>
+                  <tr><td>帧错误计数</td><td>1</td></tr>
+                </tbody>
+              </table>
+              <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn secondary">清理日志</button>
+                <button class="btn">导出诊断</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function chartHtml() {
+      return `
+        <div class="chart">
+          <svg viewBox="0 0 720 180" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="0,128 60,120 120,132 180,96 240,102 300,76 360,84 420,58 480,72 540,50 600,62 660,38 720,32" fill="none" stroke="#0b6fb3" stroke-width="4"/>
+            <polyline points="0,150 60,144 120,138 180,126 240,130 300,112 360,116 420,98 480,92 540,94 600,84 660,80 720,72" fill="none" stroke="#11875d" stroke-width="3"/>
+          </svg>
+        </div>
+      `;
+    }
+
+    function renderReviewRows() {
+      reviewRows.innerHTML = "";
+      pages.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td contenteditable="true" data-key="page"></td>
+          <td contenteditable="true" data-key="feature"></td>
+          <td contenteditable="true" data-key="controls"></td>
+          <td contenteditable="true" data-key="note"></td>
+        `;
+        row.querySelector('[data-key="page"]').textContent = item.page;
+        row.querySelector('[data-key="feature"]').textContent = item.feature;
+        row.querySelector('[data-key="controls"]').textContent = item.controls;
+        row.querySelector('[data-key="note"]').textContent = item.note;
+        row.querySelectorAll("[contenteditable]").forEach((cell) => {
+          cell.addEventListener("input", () => {
+            pages[index][cell.dataset.key] = normalizeText(cell.textContent);
+            markdownOutput.value = buildMarkdown();
+            if (pages[index].id === currentPageId) {
+              showPage(currentPageId);
+            }
+          });
+        });
+        reviewRows.appendChild(row);
+      });
+      markdownOutput.value = buildMarkdown();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    document.querySelectorAll(".tree-item[data-page]").forEach((button) => {
+      button.addEventListener("click", () => showPage(button.dataset.page));
+    });
+
+    document.getElementById("openPrdBtn").addEventListener("click", () => {
+      renderReviewRows();
+      prdModal.classList.add("open");
+    });
+
+    document.getElementById("closePrdBtn").addEventListener("click", () => {
+      prdModal.classList.remove("open");
+    });
+
+    document.getElementById("addRowBtn").addEventListener("click", () => {
+      pages.push({
+        id: `custom-${Date.now()}`,
+        page: "新页面",
+        feature: "TODO",
+        controls: "TODO",
+        note: "TODO"
+      });
+      renderReviewRows();
+      renderTabs();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      pages = JSON.parse(JSON.stringify(initialPages));
+      currentPageId = "overview";
+      renderReviewRows();
+      showPage(currentPageId);
+      showToast("已恢复初稿");
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      markdownOutput.value = buildMarkdown();
+      markdownOutput.select();
+      try {
+        await navigator.clipboard.writeText(markdownOutput.value);
+        showToast("Markdown 已复制");
+      } catch (error) {
+        document.execCommand("copy");
+        showToast("Markdown 已选中");
+      }
+    });
+
+    prdModal.addEventListener("click", (event) => {
+      if (event.target === prdModal) prdModal.classList.remove("open");
+    });
+
+    renderReviewRows();
+    showPage("overview");
+  </script>
+</body>
+</html>

@@ -1,0 +1,1439 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>触摸屏串口监控原型</title>
+  <style>
+    :root {
+      --bg: #e9edf2;
+      --panel: #ffffff;
+      --panel-soft: #f6f8fb;
+      --line: #d6dde7;
+      --text: #18212f;
+      --muted: #657386;
+      --primary: #0877c8;
+      --primary-dark: #075e9d;
+      --ok: #0c8f55;
+      --warn: #d27800;
+      --danger: #c7363a;
+      --idle: #8a95a3;
+      --nav: #dce2ea;
+      --shadow: 0 10px 30px rgba(22, 34, 51, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #cdd5df;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    .shell {
+      width: min(100vw, 920px);
+      padding: 22px;
+    }
+
+    .device {
+      width: 800px;
+      height: 480px;
+      max-width: 100%;
+      aspect-ratio: 5 / 3;
+      margin: 0 auto;
+      border: 12px solid #202733;
+      border-radius: 18px;
+      background: var(--bg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: 48px minmax(0, 1fr) 62px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 18px;
+      background: #111923;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      height: 24px;
+      line-height: 24px;
+    }
+
+    .logo {
+      min-width: auto;
+      height: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #e3222a;
+      font-size: 18px;
+      line-height: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+      transform: translateY(1px);
+    }
+
+    #screenTitle {
+      white-space: nowrap;
+      font-size: 18px;
+      line-height: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      background: var(--idle);
+    }
+
+    .dot.ok { background: var(--ok); }
+    .dot.warn { background: var(--warn); }
+
+    .page {
+      display: none;
+      height: 100%;
+      padding: 14px;
+      padding-bottom: 20px;
+      gap: 14px;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      align-items: stretch;
+      grid-auto-rows: max-content;
+      scrollbar-width: thin;
+      scrollbar-color: #aab6c4 #edf1f5;
+    }
+
+    .page.active { display: grid; }
+    .page::-webkit-scrollbar { width: 8px; }
+    .page::-webkit-scrollbar-track { background: #edf1f5; }
+    .page::-webkit-scrollbar-thumb {
+      background: #aab6c4;
+      border-radius: 8px;
+    }
+    #menuPage { grid-template-columns: 152px 1fr; }
+    #connectPage { grid-template-columns: 1fr 1.15fr; }
+    #monitorPage { grid-template-columns: 1.08fr .92fr; }
+    #curvePage, #alarmPage, #settingsPage, #systemPage { grid-template-columns: 1fr; }
+
+    .panel {
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      overflow: visible;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .badge {
+      min-width: 72px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 13px;
+      color: #fff;
+      background: var(--idle);
+    }
+
+    .badge.ok { background: var(--ok); }
+    .badge.warn { background: var(--warn); }
+
+    .menu-side {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+    }
+
+    .menu-title {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .category-list {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .category {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      text-align: center;
+      padding: 0;
+    }
+
+    .category.active {
+      color: #fff;
+      background: var(--primary);
+      border-color: var(--primary-dark);
+    }
+
+    .menu-main {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+    }
+
+    .menu-header {
+      display: grid;
+      grid-template-columns: 1fr 190px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-box {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .summary-pill {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #eff8f3;
+      color: var(--ok);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 106px;
+      gap: 10px;
+    }
+
+    .menu-card {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      grid-template-rows: minmax(62px, 1fr) 18px;
+      gap: 8px 10px;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .menu-card.active {
+      border-color: var(--primary);
+      background: #edf7ff;
+    }
+
+    .menu-card.disabled {
+      cursor: default;
+      opacity: .72;
+    }
+
+    .icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #ddeaf4;
+      color: var(--primary);
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .card-text {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .card-title {
+      display: block;
+      margin: 1px 0 5px;
+      font-size: 16px;
+      line-height: 1.1;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-desc {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .card-state {
+      grid-column: 1 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .state-ok { color: var(--ok); }
+    .state-warn { color: var(--warn); }
+    .state-idle { color: var(--idle); }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .chip {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .chip.active {
+      color: #fff;
+      background: var(--primary);
+      border-color: var(--primary-dark);
+    }
+
+    .chip.select-chip {
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .chip.select-chip::after {
+      content: "v";
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    .chart-large {
+      height: 168px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(to right, transparent 59px, #e0e6ee 60px),
+        linear-gradient(to bottom, transparent 41px, #e0e6ee 42px),
+        #f8fafc;
+      background-size: 60px 100%, 100% 42px, auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-large svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .analysis-card {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .analysis-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .analysis-card strong {
+      font-size: 19px;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .setting-card {
+      display: grid;
+      gap: 8px;
+      min-height: 90px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .setting-card label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .setting-value {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .alarm-table {
+      display: grid;
+      gap: 8px;
+    }
+
+    .alarm-row {
+      display: grid;
+      grid-template-columns: 34px 36px 150px 1fr 84px 58px 66px;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 10px;
+      border-radius: 7px;
+      background: var(--panel-soft);
+      font-size: 14px;
+      gap: 8px;
+    }
+
+    .alarm-row.header {
+      min-height: 32px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .alarm-row.hidden {
+      display: none;
+    }
+
+    .pager {
+      display: grid;
+      grid-template-columns: 90px 1fr 90px;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .page-index {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .page-dot {
+      min-width: 34px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .page-dot.active {
+      border-color: var(--primary-dark);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .check {
+      width: 20px;
+      height: 20px;
+      display: inline-grid;
+      place-items: center;
+      border: 2px solid #9eacbb;
+      border-radius: 5px;
+      background: #fff;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 900;
+      user-select: none;
+    }
+
+    .check.checked {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .check.checked::after {
+      content: "✓";
+    }
+
+    .system-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .system-section {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .system-section h3 {
+      margin: 0 0 2px;
+      font-size: 16px;
+    }
+
+    .system-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      gap: 10px;
+    }
+
+    .system-row strong {
+      color: var(--text);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #dfe6ee;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .dash-card {
+      min-height: 74px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .dash-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .dash-value {
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .device-table {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .device-row {
+      display: grid;
+      grid-template-columns: 1.1fr .8fr .8fr .8fr .7fr;
+      align-items: center;
+      min-height: 42px;
+      padding: 0 10px;
+      border-radius: 7px;
+      background: var(--panel-soft);
+      font-size: 14px;
+    }
+
+    .device-row.header {
+      min-height: 32px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .device-name {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.wide { grid-column: span 2; }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .select, .input {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .select::after {
+      content: "v";
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      height: 46px;
+      border: 0;
+      border-radius: 7px;
+      color: #fff;
+      background: var(--primary);
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: #e7ebf0;
+      border: 1px solid var(--line);
+      box-shadow: none;
+    }
+
+    .btn.danger { background: var(--danger); }
+
+    .info-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 38px;
+      padding: 0 10px;
+      border-radius: 7px;
+      background: var(--panel-soft);
+      font-size: 15px;
+    }
+
+    .info-row strong { font-size: 16px; }
+
+    .terminal {
+      height: 174px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #131a22;
+      color: #d9f2e6;
+      font: 13px/1.55 Consolas, "Courier New", monospace;
+      overflow: hidden;
+    }
+
+    .terminal .rx { color: #72e0a1; }
+    .terminal .tx { color: #8cc7ff; }
+    .terminal .err { color: #ff9898; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 82px;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+    }
+
+    .metric-name {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .metric-value small {
+      margin-left: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .trend {
+      height: 88px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(to right, transparent 49px, #e0e6ee 50px),
+        linear-gradient(to bottom, transparent 28px, #e0e6ee 29px),
+        #f8fafc;
+      background-size: 50px 100%, 100% 29px, auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trend svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .alarm-list {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .alarm {
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 10px;
+      border-radius: 7px;
+      background: var(--panel-soft);
+      font-size: 14px;
+    }
+
+    .alarm .level {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+
+    .alarm.warn .level { background: var(--warn); }
+    .alarm.danger .level { background: var(--danger); }
+
+    .log-tools {
+      display: grid;
+      grid-template-columns: 1fr 82px;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--nav);
+      border-top: 1px solid var(--line);
+    }
+
+    .nav button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7f9fb;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .nav button.active {
+      border-color: var(--primary-dark);
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .caption {
+      width: 800px;
+      max-width: 100%;
+      margin: 14px auto 0;
+      color: #2d3746;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 8px; }
+      .topbar { padding: 0 10px; }
+      .status-strip span:nth-child(2) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="device" aria-label="800x480 touch screen prototype">
+      <header class="topbar">
+        <div class="brand-title">
+          <span class="logo">ROYE</span>
+          <span id="screenTitle">上海乐研智慧终端</span>
+        </div>
+        <div class="status-strip">
+          <span><i class="dot ok"></i>COM3 已连接</span>
+          <span>115200 8N1</span>
+          <span id="dateTime">2026-05-19 14:28:36</span>
+        </div>
+      </header>
+
+      <section class="page active" id="menuPage">
+        <div class="panel menu-side">
+          <div class="menu-title">功能分类</div>
+          <div class="category-list">
+            <button class="category active" data-filter="all">全部页面</button>
+            <button class="category" data-filter="comm">通信</button>
+            <button class="category" data-filter="data">监控</button>
+            <button class="category" data-filter="config">参数</button>
+            <button class="category" data-filter="system">系统</button>
+          </div>
+        </div>
+
+        <div class="panel menu-main">
+          <div class="menu-header">
+            <div class="search-box">搜索页面 / 输入功能编号</div>
+            <div class="summary-pill">7 个页面 · 7 个已启用</div>
+          </div>
+          <div class="menu-grid">
+            <button class="menu-card active" data-group="data" data-page="dashboardPage">
+              <span class="icon">▦</span>
+              <span class="card-text">
+                <span class="card-title">仪表盘</span>
+                <span class="card-desc">所有连接终端、状态、吞吐和告警</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>01</span></span>
+            </button>
+            <button class="menu-card active" data-group="comm" data-page="connectPage">
+              <span class="icon">↔</span>
+              <span class="card-text">
+                <span class="card-title">串口连接</span>
+                <span class="card-desc">串口号、波特率、校验位、连接状态</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>02</span></span>
+            </button>
+            <button class="menu-card active" data-group="data" data-page="monitorPage">
+              <span class="icon">▥</span>
+              <span class="card-text">
+                <span class="card-title">数据监控</span>
+                <span class="card-desc">实时数值、趋势图、告警和日志</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>03</span></span>
+            </button>
+            <button class="menu-card active" data-group="data" data-page="curvePage">
+              <span class="icon">◇</span>
+              <span class="card-text">
+                <span class="card-title">曲线分析</span>
+                <span class="card-desc">多通道历史曲线、峰值和均值</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>04</span></span>
+            </button>
+            <button class="menu-card active" data-group="config" data-page="settingsPage">
+              <span class="icon">⚙</span>
+              <span class="card-text">
+                <span class="card-title">参数设置</span>
+                <span class="card-desc">采样周期、阈值、单位和保存</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>05</span></span>
+            </button>
+            <button class="menu-card active" data-group="data" data-page="alarmPage">
+              <span class="icon">!</span>
+              <span class="card-text">
+                <span class="card-title">告警记录</span>
+                <span class="card-desc">告警确认、历史查询、清除记录</span>
+              </span>
+              <span class="card-state"><span class="state-warn">有告警</span><span>06</span></span>
+            </button>
+            <button class="menu-card active" data-group="system" data-page="systemPage">
+              <span class="icon">i</span>
+              <span class="card-text">
+                <span class="card-title">系统信息</span>
+                <span class="card-desc">版本、运行时长、存储和维护</span>
+              </span>
+              <span class="card-state"><span class="state-ok">已启用</span><span>07</span></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="dashboardPage">
+        <div class="panel" style="grid-column: 1 / -1;">
+          <div class="panel-title">
+            <span>终端仪表盘</span>
+            <span class="badge ok">3 在线</span>
+          </div>
+          <div class="dashboard-grid">
+            <div class="dash-card">
+              <div class="dash-label">连接终端</div>
+              <div class="dash-value">4</div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-label">在线设备</div>
+              <div class="dash-value">3</div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-label">当前告警</div>
+              <div class="dash-value">1</div>
+            </div>
+          </div>
+          <div class="device-table">
+            <div class="device-row header">
+              <span>设备名称</span><span>接口</span><span>状态</span><span>最后数据</span><span>告警</span>
+            </div>
+            <div class="device-row">
+              <span class="device-name">F407-USB-UART</span><span>COM3</span><span class="state-ok">在线</span><span>28 ms 前</span><span>0</span>
+            </div>
+            <div class="device-row">
+              <span class="device-name">温湿度终端</span><span>COM4</span><span class="state-ok">在线</span><span>1.2 s 前</span><span>0</span>
+            </div>
+            <div class="device-row">
+              <span class="device-name">压力采集器</span><span>COM5</span><span class="state-warn">告警</span><span>3.5 s 前</span><span>1</span>
+            </div>
+            <div class="device-row">
+              <span class="device-name">备用终端</span><span>COM6</span><span class="state-idle">离线</span><span>12 min 前</span><span>0</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="connectPage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>串口连接</span>
+            <span class="badge ok">已连接</span>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>串口号</label>
+              <div class="select">COM3</div>
+            </div>
+            <div class="field">
+              <label>波特率</label>
+              <div class="select">115200</div>
+            </div>
+            <div class="field">
+              <label>数据位</label>
+              <div class="select">8 bit</div>
+            </div>
+            <div class="field">
+              <label>停止位</label>
+              <div class="select">1 bit</div>
+            </div>
+            <div class="field">
+              <label>校验位</label>
+              <div class="select">None</div>
+            </div>
+            <div class="field">
+              <label>接收格式</label>
+              <div class="select">HEX + ASCII</div>
+            </div>
+            <div class="field wide">
+              <label>设备别名</label>
+              <div class="input">F407-USB-UART</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn danger">断开</button>
+            <button class="btn secondary">刷新串口</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <span>连接状态</span>
+            <span class="badge warn">接收中</span>
+          </div>
+          <div class="info-list">
+            <div class="info-row"><span>接收计数</span><strong>12,486 B</strong></div>
+            <div class="info-row"><span>发送计数</span><strong>1,024 B</strong></div>
+            <div class="info-row"><span>帧错误</span><strong>0</strong></div>
+            <div class="info-row"><span>最后一帧</span><strong>28 ms 前</strong></div>
+          </div>
+          <div style="height: 12px"></div>
+          <div class="terminal">
+            <div class="rx">[RX 14:28:32] 01 03 08 00 FA 01 2C 13 88 00 64</div>
+            <div class="tx">[TX 14:28:33] 01 03 00 00 00 04 44 09</div>
+            <div class="rx">[RX 14:28:34] TEMP=25.0C HUM=30.0% PRESS=5000</div>
+            <div class="rx">[RX 14:28:35] FLOW=1.00L/min STATE=RUN</div>
+            <div class="err">[SYS] 超时保护：未触发</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="monitorPage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>实时数据</span>
+            <span class="badge ok">运行</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric">
+              <div class="metric-name">温度（温湿度终端）</div>
+              <div class="metric-value">25.0<small>℃</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-name">压力（压力采集器）</div>
+              <div class="metric-value">30.0<small>MPa</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-name">密度（压力采集器）</div>
+              <div class="metric-value">5.00<small>MPa</small></div>
+            </div>
+            <div class="metric">
+              <div class="metric-name">流量（F407-USB-UART）</div>
+              <div class="metric-value">1.00<small>L/min</small></div>
+            </div>
+          </div>
+          <div class="trend">
+            <svg viewBox="0 0 390 88" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,62 35,58 70,64 105,46 140,48 175,35 210,40 245,26 280,32 315,24 350,29 390,18" fill="none" stroke="#0877c8" stroke-width="4"/>
+              <polyline points="0,70 35,68 70,66 105,60 140,61 175,54 210,56 245,48 280,45 315,46 350,42 390,38" fill="none" stroke="#0c8f55" stroke-width="3"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <span>告警与日志</span>
+            <span class="badge">3 条</span>
+          </div>
+          <div class="alarm-list">
+            <div class="alarm"><span class="level"></span><span>串口连接稳定</span><strong>OK</strong></div>
+            <div class="alarm warn"><span class="level"></span><span>压力接近上限</span><strong>5.00</strong></div>
+            <div class="alarm danger"><span class="level"></span><span>历史帧 CRC 异常</span><strong>1 次</strong></div>
+          </div>
+          <div class="terminal">
+            <div class="rx">14:28:35  Ch1 温度 25.0 ℃</div>
+            <div class="rx">14:28:35  Ch2 压力 30.0 MPa</div>
+            <div class="rx">14:28:36  Ch3 密度 5.00 MPa</div>
+            <div class="rx">14:28:36  Ch4 流量 1.00 L/min</div>
+            <div class="err">14:27:58  CRC 异常帧已丢弃</div>
+          </div>
+          <div class="log-tools">
+            <div class="input">输入命令 / 手动发送帧</div>
+            <button class="btn">发送</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="curvePage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>曲线分析</span>
+            <span class="badge ok">实时</span>
+          </div>
+          <div class="toolbar">
+            <div class="chip active">最近 10 分钟</div>
+            <div class="chip">温度</div>
+            <div class="chip">压力</div>
+            <div class="chip">密度</div>
+          </div>
+          <div class="chart-large">
+            <svg viewBox="0 0 720 168" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points="0,118 60,112 120,120 180,92 240,96 300,74 360,82 420,58 480,68 540,52 600,60 660,44 720,36" fill="none" stroke="#0877c8" stroke-width="4"/>
+              <polyline points="0,136 60,132 120,126 180,118 240,120 300,106 360,110 420,94 480,88 540,90 600,82 660,78 720,70" fill="none" stroke="#0c8f55" stroke-width="3"/>
+              <polyline points="0,92 60,96 120,86 180,88 240,78 300,82 360,72 420,76 480,66 540,62 600,70 660,56 720,58" fill="none" stroke="#d27800" stroke-width="3"/>
+            </svg>
+          </div>
+          <div class="analysis-grid">
+            <div class="analysis-card"><span>温度峰值</span><strong>26.8 ℃</strong></div>
+            <div class="analysis-card"><span>压力峰值</span><strong>31.2 MPa</strong></div>
+            <div class="analysis-card"><span>密度均值</span><strong>5.04 MPa</strong></div>
+            <div class="analysis-card"><span>流量均值</span><strong>1.02 L/min</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="settingsPage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>参数设置</span>
+            <span class="badge warn">未保存</span>
+          </div>
+          <div class="settings-grid">
+            <div class="setting-card">
+              <label>采样周期</label>
+              <div class="setting-value"><span>1000</span><small>ms</small></div>
+            </div>
+            <div class="setting-card">
+              <label>刷新周期</label>
+              <div class="setting-value"><span>500</span><small>ms</small></div>
+            </div>
+            <div class="setting-card">
+              <label>日志保留</label>
+              <div class="setting-value"><span>7</span><small>天</small></div>
+            </div>
+            <div class="setting-card">
+              <label>温度上限</label>
+              <div class="setting-value"><span>60.0</span><small>℃</small></div>
+            </div>
+            <div class="setting-card">
+              <label>压力上限</label>
+              <div class="setting-value"><span>32.0</span><small>MPa</small></div>
+            </div>
+            <div class="setting-card">
+              <label>密度上限</label>
+              <div class="setting-value"><span>6.00</span><small>MPa</small></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary">恢复默认</button>
+            <button class="btn">保存参数</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="alarmPage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>告警记录</span>
+            <span class="badge warn">1 未确认</span>
+          </div>
+          <div class="toolbar">
+            <div class="chip active">全部</div>
+            <div class="chip">未确认</div>
+            <div class="chip select-chip">终端：全部</div>
+            <div class="chip">今日</div>
+          </div>
+          <div class="alarm-table" id="alarmTable">
+            <div class="alarm-row header">
+              <span><span class="check"></span></span><span>序号</span><span>日期时间</span><span>告警内容</span><span>终端</span><span>级别</span><span>状态</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>01</span><span>2026-05-20 18:27:58</span><span>压力接近上限，当前 30.0 MPa</span><span>压力采集器</span><span class="state-warn">预警</span><span>未确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>02</span><span>2026-05-20 18:18:22</span><span>历史帧 CRC 异常，已丢弃</span><span>COM3</span><span class="state-warn">一般</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>03</span><span>2026-05-20 17:52:09</span><span>备用终端离线超过 10 分钟</span><span>备用终端</span><span class="state-idle">提示</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>04</span><span>2026-05-20 16:40:31</span><span>流量低于设定阈值</span><span>F407-USB</span><span class="state-warn">一般</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>05</span><span>2026-05-20 15:36:44</span><span>密度采样值波动过大</span><span>压力采集器</span><span class="state-warn">一般</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>06</span><span>2026-05-20 14:12:08</span><span>温度接近上限</span><span>温湿度终端</span><span class="state-warn">预警</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>07</span><span>2026-05-20 13:45:19</span><span>串口 COM5 响应超时</span><span>压力采集器</span><span class="state-warn">一般</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>08</span><span>2026-05-20 11:28:50</span><span>日志空间使用率超过 75%</span><span>系统</span><span class="state-idle">提示</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>09</span><span>2026-05-20 10:04:16</span><span>配置保存失败后已重试成功</span><span>系统</span><span class="state-idle">提示</span><span>已确认</span>
+            </div>
+            <div class="alarm-row" data-record>
+              <span><span class="check"></span></span><span>10</span><span>2026-05-20 09:18:03</span><span>流量低于设定阈值</span><span>F407-USB</span><span class="state-warn">一般</span><span>已确认</span>
+            </div>
+          </div>
+          <div class="pager">
+            <button class="chip" id="alarmPrev">上一页</button>
+            <div class="page-index" id="alarmPager"></div>
+            <button class="chip" id="alarmNext">下一页</button>
+          </div>
+          <div class="actions">
+            <button class="btn secondary">导出记录</button>
+            <button class="btn">确认</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="systemPage">
+        <div class="panel">
+          <div class="panel-title">
+            <span>系统信息</span>
+            <span class="badge ok">正常</span>
+          </div>
+          <div class="system-grid">
+            <div class="system-section">
+              <h3>设备版本</h3>
+              <div class="system-row"><span>设备型号</span><strong>HDT-F407-Touch</strong></div>
+              <div class="system-row"><span>应用版本</span><strong>V1.0.0</strong></div>
+              <div class="system-row"><span>LVGL 版本</span><strong>8.x</strong></div>
+              <div class="system-row"><span>编译日期</span><strong>2026-05-20</strong></div>
+            </div>
+            <div class="system-section">
+              <h3>运行状态</h3>
+              <div class="system-row"><span>运行时长</span><strong>12:36:18</strong></div>
+              <div class="system-row"><span>CPU 负载</span><strong>28%</strong></div>
+              <div class="progress"><span style="width: 28%"></span></div>
+              <div class="system-row"><span>内存占用</span><strong>46%</strong></div>
+              <div class="progress"><span style="width: 46%"></span></div>
+            </div>
+            <div class="system-section">
+              <h3>存储资源</h3>
+              <div class="system-row"><span>日志空间</span><strong>128 MB / 512 MB</strong></div>
+              <div class="progress"><span style="width: 25%"></span></div>
+              <div class="system-row"><span>配置区</span><strong>正常</strong></div>
+              <div class="system-row"><span>最近保存</span><strong>2026-05-20 18:32</strong></div>
+            </div>
+            <div class="system-section">
+              <h3>通信资源</h3>
+              <div class="system-row"><span>已连接串口</span><strong>COM3 / COM4 / COM5</strong></div>
+              <div class="system-row"><span>在线终端</span><strong>3</strong></div>
+              <div class="system-row"><span>离线终端</span><strong>1</strong></div>
+              <div class="system-row"><span>帧错误计数</span><strong>1</strong></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn secondary">清理日志</button>
+            <button class="btn secondary">导出诊断</button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="nav" aria-label="page navigation">
+        <button class="active" data-page="menuPage">主菜单</button>
+        <button data-page="dashboardPage">仪表盘</button>
+        <button data-page="connectPage">串口连接</button>
+        <button data-page="monitorPage">数据监控</button>
+      </nav>
+    </section>
+
+    <p class="caption">菜单页按后续多页面扩展设计：左侧为分类，右侧为页面入口卡片；已启用卡片可进入页面，底部保留常用导航。</p>
+  </main>
+
+  <script>
+    const navButtons = document.querySelectorAll(".nav button");
+    const pages = document.querySelectorAll(".page");
+    const title = document.querySelector("#screenTitle");
+    const categories = document.querySelectorAll(".category");
+    const cards = document.querySelectorAll(".menu-card");
+    const dateTime = document.querySelector("#dateTime");
+    const alarmChecks = document.querySelectorAll("#alarmPage .alarm-row:not(.header) .check");
+    const alarmSelectAll = document.querySelector("#alarmPage .alarm-row.header .check");
+    const alarmRows = Array.from(document.querySelectorAll("#alarmPage .alarm-row[data-record]"));
+    const alarmPager = document.querySelector("#alarmPager");
+    const alarmPrev = document.querySelector("#alarmPrev");
+    const alarmNext = document.querySelector("#alarmNext");
+    const alarmsPerPage = 5;
+    let alarmPageIndex = 1;
+    const pageTitles = {
+      menuPage: "上海乐研智慧终端",
+      dashboardPage: "仪表盘",
+      connectPage: "串口连接",
+      monitorPage: "数据监控",
+      curvePage: "曲线分析",
+      settingsPage: "参数设置",
+      alarmPage: "告警记录",
+      systemPage: "系统信息"
+    };
+
+    function showPage(target) {
+      if (!document.getElementById(target)) return;
+      navButtons.forEach((item) => item.classList.toggle("active", item.dataset.page === target));
+      pages.forEach((page) => page.classList.toggle("active", page.id === target));
+      title.textContent = pageTitles[target] || "主菜单";
+      location.hash = target;
+    }
+
+    function filterCards(group) {
+      cards.forEach((card) => {
+        const visible = group === "all" || card.dataset.group === group;
+        card.style.display = visible ? "grid" : "none";
+      });
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      const pad = (value) => String(value).padStart(2, "0");
+      const text = [
+        now.getFullYear(),
+        pad(now.getMonth() + 1),
+        pad(now.getDate())
+      ].join("-") + " " + [
+        pad(now.getHours()),
+        pad(now.getMinutes()),
+        pad(now.getSeconds())
+      ].join(":");
+      dateTime.textContent = text;
+    }
+
+    navButtons.forEach((button) => {
+      button.addEventListener("click", () => showPage(button.dataset.page));
+    });
+
+    categories.forEach((button) => {
+      button.addEventListener("click", () => {
+        categories.forEach((item) => item.classList.toggle("active", item === button));
+        filterCards(button.dataset.filter);
+      });
+    });
+
+    cards.forEach((card) => {
+      card.addEventListener("click", () => {
+        if (card.dataset.page) showPage(card.dataset.page);
+      });
+    });
+
+    alarmChecks.forEach((check) => {
+      check.addEventListener("click", (event) => {
+        event.stopPropagation();
+        check.classList.toggle("checked");
+        const allChecked = Array.from(alarmChecks).every((item) => item.classList.contains("checked"));
+        alarmSelectAll.classList.toggle("checked", allChecked);
+      });
+    });
+
+    alarmSelectAll.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const nextChecked = !alarmSelectAll.classList.contains("checked");
+      alarmSelectAll.classList.toggle("checked", nextChecked);
+      alarmChecks.forEach((check) => check.classList.toggle("checked", nextChecked));
+    });
+
+    function renderAlarmPage(page) {
+      const pageCount = Math.max(1, Math.ceil(alarmRows.length / alarmsPerPage));
+      alarmPageIndex = Math.min(Math.max(page, 1), pageCount);
+      const start = (alarmPageIndex - 1) * alarmsPerPage;
+      const end = start + alarmsPerPage;
+
+      alarmRows.forEach((row, index) => {
+        row.classList.toggle("hidden", index < start || index >= end);
+      });
+
+      alarmPager.innerHTML = "";
+      for (let i = 1; i <= pageCount; i += 1) {
+        const button = document.createElement("button");
+        button.className = "page-dot" + (i === alarmPageIndex ? " active" : "");
+        button.textContent = i;
+        button.addEventListener("click", () => renderAlarmPage(i));
+        alarmPager.appendChild(button);
+      }
+    }
+
+    alarmPrev.addEventListener("click", () => renderAlarmPage(alarmPageIndex - 1));
+    alarmNext.addEventListener("click", () => renderAlarmPage(alarmPageIndex + 1));
+
+    const initialPage = location.hash.replace("#", "");
+    showPage(initialPage || "menuPage");
+    renderAlarmPage(1);
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+  </script>
+</body>
+</html>

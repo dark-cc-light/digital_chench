@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Code2, MessageCircle, MessageSquare } from "lucide-react";
+import { Code2, MessageCircle } from "lucide-react";
 
 const AVATAR_URL =
   "https://miaoda-site-img.cdn.bcebos.com/images/baidu_image_search_828b7a9d-a871-4be7-a805-5f6ca0909a4c.jpg";
@@ -63,14 +63,6 @@ export default function ProfileSection() {
         </a>
       </div>
 
-      {/* Primary CTA — chat entry anchor */}
-      <a
-        href="#chat"
-        className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-sm text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
-      >
-        <MessageSquare className="w-3.5 h-3.5" />
-        Ask me anything
-      </a>
     </div>
   );
 }

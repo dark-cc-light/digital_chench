@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#e9edf2"/>
+  <rect x="0" y="0" width="800" height="48" fill="#111923"/>
+  <text x="18" y="31" font-family="Microsoft YaHei, Arial" font-size="20" font-weight="700" fill="#fff">串口数据监控</text>
+  <circle cx="552" cy="24" r="5" fill="#0c8f55"/>
+  <text x="564" y="29" font-family="Microsoft YaHei, Arial" font-size="14" fill="#fff">COM3 已连接</text>
+  <text x="668" y="29" font-family="Microsoft YaHei, Arial" font-size="14" fill="#fff">115200 8N1</text>
+  <text x="746" y="29" font-family="Microsoft YaHei, Arial" font-size="14" fill="#fff">14:28</text>
+
+  <rect x="14" y="62" width="414" height="342" rx="8" fill="#fff" stroke="#d6dde7"/>
+  <text x="28" y="91" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#18212f">实时数据</text>
+  <rect x="342" y="72" width="72" height="28" rx="14" fill="#0c8f55"/>
+  <text x="366" y="91" font-family="Microsoft YaHei, Arial" font-size="13" fill="#fff">运行</text>
+
+  <g font-family="Microsoft YaHei, Arial">
+    <rect x="28" y="112" width="185" height="82" rx="8" fill="#f6f8fb" stroke="#d6dde7"/>
+    <text x="42" y="138" font-size="13" fill="#657386">温度</text>
+    <text x="42" y="174" font-size="30" font-weight="800" fill="#18212f">25.0</text>
+    <text x="118" y="174" font-size="14" font-weight="700" fill="#657386">℃</text>
+
+    <rect x="229" y="112" width="185" height="82" rx="8" fill="#f6f8fb" stroke="#d6dde7"/>
+    <text x="243" y="138" font-size="13" fill="#657386">湿度</text>
+    <text x="243" y="174" font-size="30" font-weight="800" fill="#18212f">30.0</text>
+    <text x="319" y="174" font-size="14" font-weight="700" fill="#657386">%</text>
+
+    <rect x="28" y="204" width="185" height="82" rx="8" fill="#f6f8fb" stroke="#d6dde7"/>
+    <text x="42" y="230" font-size="13" fill="#657386">压力</text>
+    <text x="42" y="266" font-size="30" font-weight="800" fill="#18212f">5.00</text>
+    <text x="118" y="266" font-size="14" font-weight="700" fill="#657386">kPa</text>
+
+    <rect x="229" y="204" width="185" height="82" rx="8" fill="#f6f8fb" stroke="#d6dde7"/>
+    <text x="243" y="230" font-size="13" fill="#657386">流量</text>
+    <text x="243" y="266" font-size="30" font-weight="800" fill="#18212f">1.00</text>
+    <text x="319" y="266" font-size="14" font-weight="700" fill="#657386">L/min</text>
+  </g>
+
+  <rect x="28" y="300" width="386" height="88" rx="8" fill="#f8fafc" stroke="#d6dde7"/>
+  <g stroke="#e0e6ee" stroke-width="1">
+    <line x1="78" y1="300" x2="78" y2="388"/><line x1="128" y1="300" x2="128" y2="388"/>
+    <line x1="178" y1="300" x2="178" y2="388"/><line x1="228" y1="300" x2="228" y2="388"/>
+    <line x1="278" y1="300" x2="278" y2="388"/><line x1="328" y1="300" x2="328" y2="388"/>
+    <line x1="28" y1="329" x2="414" y2="329"/><line x1="28" y1="358" x2="414" y2="358"/>
+  </g>
+  <polyline points="28,362 63,358 98,364 133,346 168,348 203,335 238,340 273,326 308,332 343,324 378,329 414,318" fill="none" stroke="#0877c8" stroke-width="4"/>
+  <polyline points="28,370 63,368 98,366 133,360 168,361 203,354 238,356 273,348 308,345 343,346 378,342 414,338" fill="none" stroke="#0c8f55" stroke-width="3"/>
+
+  <rect x="442" y="62" width="344" height="342" rx="8" fill="#fff" stroke="#d6dde7"/>
+  <text x="456" y="91" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#18212f">告警与日志</text>
+  <rect x="700" y="72" width="72" height="28" rx="14" fill="#8a95a3"/>
+  <text x="722" y="91" font-family="Microsoft YaHei, Arial" font-size="13" fill="#fff">3 条</text>
+
+  <g font-family="Microsoft YaHei, Arial" font-size="14">
+    <rect x="456" y="112" width="316" height="36" rx="7" fill="#f6f8fb"/>
+    <circle cx="472" cy="130" r="5" fill="#0c8f55"/><text x="488" y="135" fill="#18212f">串口连接稳定</text><text x="738" y="135" font-weight="700" fill="#18212f">OK</text>
+    <rect x="456" y="158" width="316" height="36" rx="7" fill="#f6f8fb"/>
+    <circle cx="472" cy="176" r="5" fill="#d27800"/><text x="488" y="181" fill="#18212f">压力接近上限</text><text x="728" y="181" font-weight="700" fill="#18212f">5.00</text>
+    <rect x="456" y="204" width="316" height="36" rx="7" fill="#f6f8fb"/>
+    <circle cx="472" cy="222" r="5" fill="#c7363a"/><text x="488" y="227" fill="#18212f">历史帧 CRC 异常</text><text x="728" y="227" font-weight="700" fill="#18212f">1 次</text>
+  </g>
+
+  <rect x="456" y="252" width="316" height="88" rx="7" fill="#131a22"/>
+  <text x="468" y="276" font-family="Consolas, monospace" font-size="13" fill="#72e0a1">14:28:35  Ch1 温度 25.0 C</text>
+  <text x="468" y="298" font-family="Consolas, monospace" font-size="13" fill="#72e0a1">14:28:35  Ch2 湿度 30.0 %</text>
+  <text x="468" y="320" font-family="Consolas, monospace" font-size="13" fill="#72e0a1">14:28:36  Ch3 压力 5.00 kPa</text>
+  <text x="468" y="334" font-family="Consolas, monospace" font-size="12" fill="#ff9898">14:27:58  CRC 异常帧已丢弃</text>
+
+  <rect x="456" y="352" width="224" height="38" rx="7" fill="#f6f8fb" stroke="#d6dde7"/>
+  <text x="470" y="376" font-family="Microsoft YaHei, Arial" font-size="14" fill="#657386">输入命令 / 手动发送帧</text>
+  <rect x="690" y="352" width="82" height="38" rx="7" fill="#0877c8"/>
+  <text x="714" y="376" font-family="Microsoft YaHei, Arial" font-size="16" font-weight="700" fill="#fff">发送</text>
+
+  <rect x="0" y="418" width="800" height="62" fill="#dce2ea" stroke="#d6dde7"/>
+  <rect x="14" y="428" width="378" height="42" rx="8" fill="#f7f9fb" stroke="#d6dde7"/>
+  <text x="165" y="456" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="800" fill="#18212f">串口连接</text>
+  <rect x="408" y="428" width="378" height="42" rx="8" fill="#0877c8" stroke="#075e9d"/>
+  <text x="559" y="456" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="800" fill="#fff">数据监控</text>
+</svg>
