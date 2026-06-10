@@ -139,13 +139,13 @@ export default function ChatSection() {
       {messages.length <= 1 && (
         <div className="px-4 pb-3">
           <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 items-start">
             {SUGGESTED_QUESTIONS.map((q) => (
               <button
                 key={q}
                 type="button"
                 onClick={() => handleSend(q)}
-                className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-accent text-foreground transition-colors text-left"
+                className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-accent text-foreground transition-colors whitespace-nowrap"
               >
                 {q}
               </button>
