@@ -14,9 +14,9 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
-  "你在做什么？ / What are you working on?",
-  "怎么联系你？ / How can I contact you?",
-  "你的未来规划是什么？ / What are your future plans?",
+  "What are you working on?",
+  "How can I contact you?",
+  "What are your future plans?",
 ];
 
 export default function ChatSection() {
