@@ -1,6 +1,6 @@
 {
   "build": {
-    "command": "npm install && npx --yes vite build",
+    "command": "sh -c 'npm install && npm run build'",
     "output": "dist"
   }
 }
