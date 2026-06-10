@@ -1,6 +1,6 @@
 {
   "build": {
-    "command": "sh -c 'npm install && npm run build'",
+    "command": "npm run build",
     "output": "dist"
   }
 }
